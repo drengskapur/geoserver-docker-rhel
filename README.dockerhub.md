@@ -41,19 +41,19 @@ All tags include `-ubi9` suffix for enterprise identification:
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
+| Variable             | Default               | Description              |
+| -------------------- | --------------------- | ------------------------ |
 | `GEOSERVER_DATA_DIR` | `/opt/geoserver_data` | GeoServer data directory |
-| `JAVA_OPTS` | `-Xms1G -Xmx2G` | JVM memory settings |
-| `EXTRA_JAVA_OPTS` | | Additional JVM options |
+| `JAVA_OPTS`          | `-Xms1G -Xmx2G`       | JVM memory settings      |
+| `EXTRA_JAVA_OPTS`    |                       | Additional JVM options   |
 
 ## Volumes
 
-| Path | Description |
-|------|-------------|
-| `/opt/geoserver_data` | GeoServer data directory |
-| `/opt/additional_libs` | Additional plugins |
-| `/opt/additional_fonts` | Custom fonts |
+| Path                    | Description              |
+| ----------------------- | ------------------------ |
+| `/opt/geoserver_data`   | GeoServer data directory |
+| `/opt/additional_libs`  | Additional plugins       |
+| `/opt/additional_fonts` | Custom fonts             |
 
 ## Production Example
 
