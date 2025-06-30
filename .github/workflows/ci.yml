@@ -170,8 +170,8 @@ jobs:
             org.opencontainers.image.vendor=drengskapur
             org.opencontainers.image.base.name=registry1.dso.mil/ironbank/redhat/ubi/ubi9:latest
             org.opencontainers.image.documentation=https://github.com/drengskapur/geoserver-docker-rhel
-            org.label-schema.vcs-ref={{.ShortSHA}}
-            org.label-schema.build-date={{.Date}}
+            org.label-schema.vcs-ref={{sha}}
+            org.label-schema.build-date={{date}}
             geoserver.version=${{ steps.geoserver_version.outputs.geoserver_version }}
             fork.commit={{sha}}
             upstream.synced={{date 'YYYY-MM-DD'}}
