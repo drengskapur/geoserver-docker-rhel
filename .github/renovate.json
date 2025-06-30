@@ -114,7 +114,7 @@
       "minimumReleaseAge": "5 days"
     },
     {
-      "description": "Docker base images - regular updates",
+      "description": "Upstream Dockerfile changes - trigger enterprise rebuild",
       "matchDatasources": [
         "docker"
       ],
@@ -130,11 +130,14 @@
       "prPriority": 6,
       "labels": [
         "docker",
-        "base-image"
+        "upstream-change",
+        "enterprise-rebuild"
       ],
-      "commitMessagePrefix": "feat(docker):",
+      "commitMessagePrefix": "feat(upstream):",
       "stabilityDays": 5,
-      "minimumReleaseAge": "5 days"
+      "minimumReleaseAge": "5 days",
+      "prTitle": "feat(upstream): {{depName}} {{newVersion}} - trigger enterprise rebuild",
+      "prBody": "This upstream dependency update will trigger a rebuild of our enterprise UBI9-based images.\n\n- **Upstream change**: {{depName}} {{currentVersion}} → {{newVersion}}\n- **Impact**: New enterprise Docker images will be built with UBI9 base\n- **Action needed**: Merge to trigger automated enterprise image rebuild\n\n{{#if hasReleaseNotes}}**Release Notes**: {{releaseNotes}}{{/if}}"
     },
     {
       "description": "GeoServer releases - track but don't auto-update",
@@ -248,7 +251,7 @@
   ],
   "enabledManagers": [
     "dockerfile",
-    "docker-compose",
+    "docker-compose", 
     "github-actions",
     "regex"
   ],
