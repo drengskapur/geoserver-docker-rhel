@@ -126,9 +126,16 @@ jobs:
         if: (github.event_name != 'pull_request') && (github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true')
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
-          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Log in to the Container registry
+        if: (github.event_name != 'pull_request') && (github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true')
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract GeoServer version from upstream
         if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
@@ -143,12 +150,14 @@ jobs:
           echo "geoserver_version=${GS_VERSION}" >> $GITHUB_OUTPUT
           echo "Detected GeoServer version: ${GS_VERSION}"
 
-      - name: Extract metadata
+      - name: Extract metadata (tags, labels) for Docker
         if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
         id: meta
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
-          images: ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+            ghcr.io/${{ github.repository }}
           flavor: |
             latest=auto
             suffix=-ubi9,onlatest=true
@@ -173,8 +182,9 @@ jobs:
             geoserver.version=${{ steps.geoserver_version.outputs.geoserver_version }}
             upstream.synced={{date 'YYYY-MM-DD'}}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker images
         if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
+        id: push
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
@@ -184,3 +194,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Generate artifact attestation
+        if: (github.event_name != 'pull_request') && (github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true')
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
