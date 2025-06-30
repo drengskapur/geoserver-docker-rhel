@@ -1,0 +1,264 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate configuration for GeoServer Docker RHEL enterprise fork",
+  "extends": [
+    "config:recommended",
+    "security:openssf-scorecard",
+    "docker:enableMajor",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "timezone": "America/New_York",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "prConcurrentLimit": 3,
+  "branchConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "separateMinorPatch": true,
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "labels": [
+    "dependencies",
+    "security"
+  ],
+  "assignees": [
+    "drengskapur"
+  ],
+  "reviewers": [
+    "drengskapur"
+  ],
+  "commitMessagePrefix": "chore(deps):",
+  "semanticCommits": "enabled",
+  "stabilityDays": 3,
+  "minimumReleaseAge": "3 days",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": [
+      "at any time"
+    ]
+  },
+  "osvVulnerabilityAlerts": true,
+  "lockFileMaintenance": {
+    "enabled": false,
+    "automerge": false
+  },
+  "packageRules": [
+    {
+      "description": "Critical security updates - auto-merge",
+      "matchDatasources": [
+        "docker",
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action"
+      ],
+      "vulnerabilityAlerts": true,
+      "automerge": true,
+      "automergeType": "pr",
+      "schedule": [
+        "at any time"
+      ],
+      "labels": [
+        "security",
+        "critical",
+        "automerge"
+      ],
+      "commitMessagePrefix": "fix(security):",
+      "stabilityDays": 0,
+      "minimumReleaseAge": null
+    },
+    {
+      "description": "Iron Bank/Registry1 base images - high priority",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "registry1.dso.mil/ironbank/redhat/ubi/ubi9"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ],
+      "prPriority": 10,
+      "labels": [
+        "iron-bank",
+        "security",
+        "base-image"
+      ],
+      "commitMessagePrefix": "feat(base):",
+      "reviewers": [
+        "drengskapur"
+      ],
+      "stabilityDays": 7,
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "GitHub Actions - pin digests and auto-update",
+      "matchDatasources": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action"
+      ],
+      "pinDigests": true,
+      "schedule": [
+        "before 6am on monday"
+      ],
+      "prPriority": 8,
+      "labels": [
+        "github-actions",
+        "security"
+      ],
+      "commitMessagePrefix": "ci:",
+      "automerge": false,
+      "stabilityDays": 5,
+      "minimumReleaseAge": "5 days"
+    },
+    {
+      "description": "Docker base images - regular updates",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "eclipse-temurin",
+        "tomcat",
+        "postgres",
+        "postgis/postgis"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ],
+      "prPriority": 6,
+      "labels": [
+        "docker",
+        "base-image"
+      ],
+      "commitMessagePrefix": "feat(docker):",
+      "stabilityDays": 5,
+      "minimumReleaseAge": "5 days"
+    },
+    {
+      "description": "GeoServer releases - track but don't auto-update",
+      "matchDatasources": [
+        "github-releases",
+        "github-tags"
+      ],
+      "matchPackageNames": [
+        "geoserver/geoserver"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ],
+      "prPriority": 9,
+      "labels": [
+        "geoserver",
+        "upstream"
+      ],
+      "commitMessagePrefix": "feat(geoserver):",
+      "automerge": false,
+      "stabilityDays": 14,
+      "minimumReleaseAge": "14 days",
+      "enabled": true
+    },
+    {
+      "description": "Major version updates - manual review required",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "prPriority": 5,
+      "labels": [
+        "major-update",
+        "manual-review"
+      ],
+      "commitMessagePrefix": "feat!:",
+      "stabilityDays": 14,
+      "minimumReleaseAge": "14 days",
+      "schedule": [
+        "before 6am on monday"
+      ]
+    },
+    {
+      "description": "Minor and patch updates - can be auto-merged",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": false,
+      "prPriority": 7,
+      "labels": [
+        "minor-patch"
+      ],
+      "stabilityDays": 3,
+      "minimumReleaseAge": "3 days"
+    }
+  ],
+  "regexManagers": [
+    {
+      "description": "Update GeoServer version in upstream Dockerfile monitoring",
+      "fileMatch": [
+        "^\\.github/workflows/ci\\.yml$"
+      ],
+      "matchStrings": [
+        "GS_VERSION=\\$\\(git show upstream/master:Dockerfile \\| grep \"\\^ARG GS_VERSION=\" \\| cut -d'=' -f2\\)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "geoserver/geoserver",
+      "extractVersionTemplate": "^(?<version>.*)$"
+    },
+    {
+      "description": "Monitor Iron Bank UBI9 digest changes",
+      "fileMatch": [
+        "^\\.github/workflows/ci\\.yml$"
+      ],
+      "matchStrings": [
+        "CURRENT_DIGEST=\\$\\(docker manifest inspect registry1\\.dso\\.mil/ironbank/redhat/ubi/ubi9:(?<currentValue>.*?) "
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "registry1.dso.mil/ironbank/redhat/ubi/ubi9",
+      "currentValueTemplate": "{{{currentValue}}}"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update Dockerfile base image versions",
+      "fileMatch": [
+        "^Dockerfile.*$"
+      ],
+      "matchStrings": [
+        "ARG\\s+(?<depName>\\S+)=(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/.git/**"
+  ],
+  "ignoreDeps": [
+    "node",
+    "npm"
+  ],
+  "postUpdateOptions": [
+    "dockerfileUpdate",
+    "goModTidy"
+  ],
+  "enabledManagers": [
+    "dockerfile",
+    "docker-compose",
+    "github-actions",
+    "regex"
+  ],
+  "docker": {
+    "pinDigests": true
+  },
+  "github-actions": {
+    "pinDigests": true
+  },
+  "prBodyTemplate": "This PR contains dependency updates for the GeoServer Docker RHEL enterprise fork.\n\n{{{table}}}\n\n{{{notes}}}\n\n---\n\n🔒 **Security**: This is an enterprise-focused fork with emphasis on security and stability.\n📋 **Testing**: Please verify changes in a staging environment before merging.\n🔄 **Upstream Sync**: Monitor for any upstream compatibility issues.",
+  "branchPrefix": "renovate/",
+  "gitAuthor": "Renovate Bot <bot@renovateapp.com>"
+}
