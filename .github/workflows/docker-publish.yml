@@ -130,6 +130,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
+      - name: Extract GeoServer version from upstream
+        if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
+        id: geoserver_version
+        run: |
+          # Extract GeoServer version from upstream Dockerfile
+          git fetch upstream master
+          GS_VERSION=$(git show upstream/master:Dockerfile | grep "^ARG GS_VERSION=" | cut -d'=' -f2)
+          echo "geoserver_version=${GS_VERSION}" >> $GITHUB_OUTPUT
+          echo "Detected GeoServer version: ${GS_VERSION}"
+
       - name: Extract metadata
         if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
         id: meta
@@ -147,6 +157,7 @@ jobs:
             type=semver,pattern={{major}},suffix=-ubi9
             type=raw,value=latest,suffix=-ubi9,enable={{is_default_branch}}
             type=raw,value=edge,suffix=-ubi9,enable={{is_default_branch}}
+            type=raw,value=${{ steps.geoserver_version.outputs.geoserver_version }},suffix=-ubi9
             type=schedule,pattern={{date 'YYYYMMDD'}},suffix=-ubi9
 
       - name: Build and push Docker image
