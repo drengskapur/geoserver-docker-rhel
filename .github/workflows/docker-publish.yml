@@ -136,13 +136,18 @@ jobs:
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
           images: ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+            suffix=-ubi9,onlatest=true
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,suffix=-ubi9
+            type=ref,event=pr,suffix=-ubi9
+            type=semver,pattern={{version}},suffix=-ubi9
+            type=semver,pattern={{major}}.{{minor}},suffix=-ubi9
+            type=semver,pattern={{major}},suffix=-ubi9
+            type=raw,value=latest,suffix=-ubi9,enable={{is_default_branch}}
+            type=raw,value=edge,suffix=-ubi9,enable={{is_default_branch}}
+            type=schedule,pattern={{date 'YYYYMMDD'}},suffix=-ubi9
 
       - name: Build and push Docker image
         if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
