@@ -125,4 +125,4 @@ This image automatically:
 
 ---
 
-**Base**: Red Hat UBI9 | **Java**: OpenJDK 17 | **GeoServer**: Auto-synced | **Architecture**: AMD64, ARM64
+**Base**: Red Hat UBI9 | **Java**: OpenJDK 17 | **GeoServer**: Auto-synced
