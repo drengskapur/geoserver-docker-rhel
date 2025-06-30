@@ -9,7 +9,7 @@
   ],
   "timezone": "America/New_York",
   "schedule": [
-    "before 6am on monday"
+    "after 7am on monday"
   ],
   "prConcurrentLimit": 3,
   "branchConcurrentLimit": 5,
