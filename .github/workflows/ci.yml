@@ -134,6 +134,9 @@ jobs:
         if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
         id: geoserver_version
         run: |
+          # Add upstream remote if not exists
+          git remote add upstream https://github.com/geoserver/docker.git || true
+          
           # Extract GeoServer version from upstream Dockerfile
           git fetch upstream master
           GS_VERSION=$(git show upstream/master:Dockerfile | grep "^ARG GS_VERSION=" | cut -d'=' -f2)
