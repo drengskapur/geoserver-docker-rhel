@@ -9,18 +9,19 @@
 ## 🏢 Enterprise Features
 
 - **Hardened Base**: Red Hat UBI9 from Iron Bank registry
-- **Security**: Minimal attack surface, regular security updates
-- **Compliance**: Enterprise-grade base images for regulated environments
-- **Multi-Architecture**: AMD64 and ARM64 support
 - **Automated Updates**: Synced with upstream GeoServer releases
 
 ## Quick Start
 
-```bash
-# Latest enterprise build
-docker run -d -p 8080:8080 drengskapur/geoserver:latest-ubi9
+Latest enterprise build
 
-# Specific GeoServer version
+```bash
+docker run -d -p 8080:8080 drengskapur/geoserver:latest-ubi9
+```
+
+Specific GeoServer version
+
+```bash
 docker run -d -p 8080:8080 drengskapur/geoserver:2.27.0-ubi9
 ```
 
