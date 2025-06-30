@@ -1,2 +1,59 @@
+# Version control
+.git
+.gitignore
+
+# Documentation
+README.md
+README.dockerhub.md
+*.md
+docs/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Test files
+test/
+tests/
+*_test.go
+*.test
+
+# Build artifacts
+dist/
 build/
+target/
+
+# Development
+docker-compose*.yml
+.env*
+local/
+
+# Node modules
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
 postgis/

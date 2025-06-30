@@ -1,14 +1,22 @@
 name: Docker Build and Publish
 
+permissions:
+  contents: write  # Required to push sync changes back to repository
+
 on:
   push:
     branches:
-      - main
+      - master
+      - fork
     tags:
       - 'v*'
   pull_request:
     branches:
-      - main
+      - master
+      - fork
+  schedule:
+    # Check for upstream changes every 6 hours
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 env:
@@ -21,15 +29,93 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Check for upstream changes and sync
+        if: github.event_name == 'schedule'
+        id: upstream
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add upstream remote
+          git remote add upstream https://github.com/geoserver/docker.git || true
+          git fetch upstream master
+          
+          # Check for changes
+          UPSTREAM_SHA=$(git rev-parse upstream/master)
+          CURRENT_SHA=$(git rev-parse origin/master)
+          
+          if [ "$UPSTREAM_SHA" != "$CURRENT_SHA" ]; then
+            echo "upstream_changed=true" >> $GITHUB_OUTPUT
+            echo "Upstream changes detected, syncing..."
+            
+            # Switch to master branch
+            git checkout master
+            
+            # Merge upstream changes
+            git merge upstream/master --no-edit || {
+              echo "Merge conflict detected! Manual intervention required."
+              exit 1
+            }
+            
+            # Push the updated master branch
+            git push origin master
+            
+            echo "Successfully synced with upstream"
+          else
+            echo "upstream_changed=false" >> $GITHUB_OUTPUT
+            echo "Already up to date with upstream"
+          fi
+
+      - name: Check for UBI9 base image updates
+        if: github.event_name == 'schedule'
+        id: ubi9
+        run: |
+          echo "Checking for UBI9 base image updates..."
+          
+          # Get current UBI9 image digest from Iron Bank
+          CURRENT_DIGEST=$(docker manifest inspect registry1.dso.mil/ironbank/redhat/ubi/ubi9:latest 2>/dev/null | jq -r '.config.digest' || echo "unknown")
+          
+          # Get stored digest from previous run (if exists)
+          STORED_DIGEST_FILE=".github/ubi9-digest.txt"
+          if [ -f "$STORED_DIGEST_FILE" ]; then
+            STORED_DIGEST=$(cat "$STORED_DIGEST_FILE")
+          else
+            STORED_DIGEST="none"
+          fi
+          
+          echo "Current UBI9 digest: $CURRENT_DIGEST"
+          echo "Stored UBI9 digest: $STORED_DIGEST"
+          
+          if [ "$CURRENT_DIGEST" != "$STORED_DIGEST" ] && [ "$CURRENT_DIGEST" != "unknown" ]; then
+            echo "ubi9_changed=true" >> $GITHUB_OUTPUT
+            echo "UBI9 base image updated!"
+            
+            # Store new digest
+            mkdir -p .github
+            echo "$CURRENT_DIGEST" > "$STORED_DIGEST_FILE"
+            
+            # Commit the digest file
+            git add "$STORED_DIGEST_FILE"
+            git commit -m "chore: update UBI9 image digest to ${CURRENT_DIGEST:0:12}" || true
+            git push origin master || true
+          else
+            echo "ubi9_changed=false" >> $GITHUB_OUTPUT
+            echo "UBI9 base image unchanged"
+          fi
 
       - name: Set up QEMU
+        if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
 
       - name: Set up Docker Buildx
+        if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Log in to Registry1
-        if: github.event_name != 'pull_request'
+        if: (github.event_name != 'pull_request') && (github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true')
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           registry: registry1.dso.mil
@@ -37,7 +123,7 @@ jobs:
           password: ${{ secrets.REGISTRY1_TOKEN }}
 
       - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request'
+        if: (github.event_name != 'pull_request') && (github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true')
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           registry: ${{ env.REGISTRY }}
@@ -45,6 +131,7 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Extract metadata
+        if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
         id: meta
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
@@ -58,6 +145,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
+        if: github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
@@ -69,10 +157,10 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Update Docker Hub description
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: (github.event_name != 'pull_request') && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/fork') && (github.event_name != 'schedule' || steps.upstream.outputs.upstream_changed == 'true' || steps.ubi9.outputs.ubi9_changed == 'true')
         uses: peter-evans/dockerhub-description@432a30c9e07499fd01da9f8a49f0faf9e0ca5b77 # v4.0.2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
           repository: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
-          readme-filepath: ./README.md
+          readme-filepath: ./README.dockerhub.md

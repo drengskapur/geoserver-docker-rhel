@@ -1,3 +1,57 @@
+# Docker
+.dockerignore
+docker-compose.override.yml
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Secrets
+*.key
+*.pem
+*.crt
+secrets/
+.env.local
+.env.production
+
+# Test data
+test-data/
+*.test
+
+# Node modules (if using any JS tooling)
+node_modules/
+package-lock.json
+
+# Python (if using any Python scripts)
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local development
+docker-compose.local.yml
+local/
+
 *.iml
 *.idea
 postgis/
