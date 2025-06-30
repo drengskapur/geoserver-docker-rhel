@@ -1,166 +1,19 @@
-# GeoServer Docker RHEL
-
-[![Docker Pulls](https://img.shields.io/docker/pulls/drengskapur/geoserver)](https://hub.docker.com/r/drengskapur/geoserver)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/drengskapur/geoserver-docker-rhel/docker-publish.yml?branch=fork)](https://github.com/drengskapur/geoserver-docker-rhel/actions)
-[![License](https://img.shields.io/badge/license-GPL--2.0-blue)](LICENSE)
-
-> Enterprise-focused fork of GeoServer Docker with hardened RHEL9 base images
-
-## About This Fork
-
-This is a **fork** of the official [GeoServer Docker project](https://github.com/geoserver/docker) with specific focus on:
-
-- **🛡️ Enterprise Security**: Hardened RHEL9/UBI9 base images
-- **🔄 Automatic Upstream Sync**: Daily synchronization with upstream changes
-- **📦 Multi-Architecture**: AMD64 and ARM64 support
-- **⚡ Performance**: Optimized for production enterprise environments
-
-## Quick Start
-
-```bash
-# Pull and run
-docker run -d -p 8080:8080 drengskapur/geoserver:latest
-
-# Access GeoServer
-open http://localhost:8080/geoserver
-```
-
-**Docker Hub**: [drengskapur/geoserver](https://hub.docker.com/r/drengskapur/geoserver)
-
-## Key Differences from Upstream
-
-| Feature | Upstream | This Fork |
-|---------|----------|-----------|
-| **Base Image** | Ubuntu/Debian | RHEL9/UBI9 |
-| **Registry** | Docker Hub | Docker Hub + Registry1 ready |
-| **Security** | Standard | Hardened enterprise |
-| **Updates** | Manual | Automated upstream sync |
-| **Target** | General use | Enterprise environments |
-
-## Images
-
-### Available Tags
-
-- `latest` - Latest stable with RHEL9 base
-- `2.25.x` - Specific GeoServer versions
-- `main` - Development builds
-
-### Architecture Support
-
-- `linux/amd64` - Intel/AMD 64-bit
-- `linux/arm64` - ARM 64-bit (Apple M1, AWS Graviton)
-
-## Enterprise Features
-
-### Security Hardening
-
-- **RHEL9/UBI9 base**: Enterprise-grade base images
-- **CVE scanning**: Automated vulnerability detection
-- **Registry1 ready**: Compatible with DoD Iron Bank
-- **Non-root execution**: Runs as unprivileged user
-- **Security updates**: Automatic base image updates
-
-### Deployment Options
-
-```bash
-# Basic deployment
-docker run -d -p 8080:8080 drengskapur/geoserver:latest
-
-# Production deployment
-docker run -d \
-  --name geoserver \
-  --user 1001:1001 \
-  -p 8080:8080 \
-  -v geoserver-data:/opt/geoserver_data \
-  -e JAVA_OPTS="-Xms4G -Xmx8G" \
-  drengskapur/geoserver:latest
-```
-
-## Automatic Upstream Sync
-
-This fork automatically:
-
-- **Syncs with upstream** every 6 hours
-- **Detects changes** in the main GeoServer Docker project
-- **Rebuilds images** when upstream or base images update
-- **Handles conflicts** gracefully (with notifications)
-
-## Development
-
-### Building Locally
-
-```bash
-# Clone this fork
-git clone https://github.com/drengskapur/geoserver-docker-rhel.git
-cd geoserver-docker-rhel
-
-# Build RHEL9 variant
-docker build -f Dockerfile.rhel9 -t geoserver:rhel9 .
-
-# Build standard variant
-docker build -t geoserver:standard .
-```
-
-### Requirements for RHEL9 Builds
-
-- **Registry1 access**: Required for UBI9 base images
-- **Docker BuildKit**: For multi-stage builds
-- **Valid credentials**: Set `REGISTRY1_USERNAME` and `REGISTRY1_TOKEN`
-
-## Upstream Relationship
-
-- **Upstream**: [geoserver/docker](https://github.com/geoserver/docker)
-- **Sync frequency**: Every 6 hours
-- **Contribution policy**: Enterprise-specific changes here, general improvements upstream
-
-### Contributing
-
-- **Fork-specific features**: Submit PRs to this repository
-- **General improvements**: Consider contributing to [upstream](https://github.com/geoserver/docker) first
-- **See**: [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines
-
-## Support
-
-### For This Fork
-
-- **Issues**: [GitHub Issues](https://github.com/drengskapur/geoserver-docker-rhel/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/drengskapur/geoserver-docker-rhel/discussions)
-- **Security**: See [SECURITY.md](SECURITY.md)
-
-### For General GeoServer
-
-- **Documentation**: [GeoServer Docs](https://docs.geoserver.org/)
-- **Community**: [GeoServer Community](https://geoserver.org/comm/)
-- **Upstream Issues**: [geoserver/docker](https://github.com/geoserver/docker/issues)
-
-## License
-
-This project is licensed under the GPL-2.0 License - see [LICENSE](LICENSE) for details.
-
-GeoServer is licensed under the GPL-2.0 License - see [GeoServer License](http://geoserver.org/license/) for details.
-
----
-
-**Maintained by**: [@drengskapur](https://github.com/drengskapur)  
-**Upstream**: [geoserver/docker](https://github.com/geoserver/docker)  
-**Base**: Red Hat UBI9 | **Java**: OpenJDK 17
-
-## A GeoServer docker image
+# A GeoServer docker image
 
 This Dockerfile can be used to create images for all geoserver versions since 2.5.
 
-- Based on the official [`tomcat` docker image](https://hub.docker.com/_/tomcat), in particular:
-  - Tomcat 9
-  - JDK17 (eclipse temurin)
-  - Ubuntu Jammy (22.04 LTS)
-- GeoServer installation is configurable and supports
-  - Dynamic installation of extensions
-  - Custom fonts (e.g. for SLD styling)
-  - CORS
-  - Additional libraries
-  - PostgreSQL JNDI
-  - HTTPS
-  - GDAL with Java Bindings
+* Based on the official [`tomcat` docker image](https://hub.docker.com/_/tomcat), in particular:
+  * Tomcat 9
+  * JDK17 (eclipse temurin)
+  * Ubuntu Jammy (22.04 LTS)
+* GeoServer installation is configurable and supports
+  * Dynamic installation of extensions
+  * Custom fonts (e.g. for SLD styling)
+  * CORS
+  * Additional libraries
+  * PostgreSQL JNDI
+  * HTTPS
+  * GDAL with Java Bindings
 
 This README.md file covers use of official docker image, additional [build](BUILD.md) and [release](RELEASE.md) instructions are available.
 
@@ -171,7 +24,6 @@ To pull an official image use ``docker.osgeo.org/geoserver:{{VERSION}}``, e.g.:
 ```shell
 docker pull docker.osgeo.org/geoserver:2.27.0
 ```
-
 All the images can be found at: [https://repo.osgeo.org](https://repo.osgeo.org/#browse/browse:geoserver-docker:v2/geoserver/tags) and the latest stable and maintenance version numbers can be obtained from [https://geoserver.org/download/](https://geoserver.org/download/)
 
 Afterwards you can run the pulled image locally with:
@@ -225,7 +77,6 @@ By default, GeoServer is served from <http://localhost/geoserver>. Use the envir
 examples:
 
 The following will serve GeoServer from the root (<http://localhost/>):
-
 ```shell
 docker run -it -p 80:8080 \
   --env WEBAPP_CONTEXT="" \
@@ -233,7 +84,6 @@ docker run -it -p 80:8080 \
 ```
 
 The following will serve GeoServer from <http://localhost/my_context_path>:
-
 ```shell
 docker run -it -p 80:8080 \
   --env WEBAPP_CONTEXT="my_context_path" \
@@ -249,14 +99,14 @@ The environment variable `ROOT_WEBAPP_REDIRECT` can be set to `true` to issue a 
 
 The ``startup.sh`` script allows some customization on startup:
 
-- ``INSTALL_EXTENSIONS`` to ``true`` to download and install extensions
-- ``STABLE_EXTENSIONS`` list of extensions to download and install
-- ``CORS_ENABLED`` to ``true`` to enable CORS support. The following environment variables can be used to customize the CORS configuration.
-  - ``CORS_ALLOWED_ORIGINS`` (default ``*``)
-  - ``CORS_ALLOWED_METHODS`` (default ``GET,POST,PUT,DELETE,HEAD,OPTIONS``)
-  - ``CORS_ALLOWED_HEADERS`` (default ``Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers``)
-  - ``CORS_ALLOW_CREDENTIALS`` (default ``false``) **Setting this to ``true`` will only have the desired effect if ``CORS_ALLOWED_ORIGINS`` defines explicit origins (not ``*``)**
-- ``PROXY_BASE_URL`` to the base URL of the GeoServer web app if GeoServer is behind a proxy. Example: ``https://example.com/geoserver``.
+* ``INSTALL_EXTENSIONS`` to ``true`` to download and install extensions
+* ``STABLE_EXTENSIONS`` list of extensions to download and install
+* ``CORS_ENABLED`` to ``true`` to enable CORS support. The following environment variables can be used to customize the CORS configuration.
+  * ``CORS_ALLOWED_ORIGINS`` (default ``*``)
+  * ``CORS_ALLOWED_METHODS`` (default ``GET,POST,PUT,DELETE,HEAD,OPTIONS``)
+  * ``CORS_ALLOWED_HEADERS`` (default ``Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers``)
+  * ``CORS_ALLOW_CREDENTIALS`` (default ``false``) **Setting this to ``true`` will only have the desired effect if ``CORS_ALLOWED_ORIGINS`` defines explicit origins (not ``*``)**
+* ``PROXY_BASE_URL`` to the base URL of the GeoServer web app if GeoServer is behind a proxy. Example: ``https://example.com/geoserver``.
 
 The CORS variables customize tomcat's `web.xml` file. If you need more customization,
 you can provide your own customized `web.xml` file to tomcat by mounting it into the container
@@ -307,28 +157,30 @@ docker run -it -p 80:8080 \
 
 **Note:** Do not change the target value!
 
+
 ## How to enable a PostgreSQL JNDI resource?
 
 To enable a PostgreSQL JNDI resource, provide the following environment variables:
 
-- ``POSTGRES_JNDI_ENABLED`` to ``true``
-- ``POSTGRES_HOST``
-- ``POSTGRES_PORT`` (optional; defaults to 5432)
-- ``POSTGRES_DB``
-- ``POSTGRES_USERNAME``
-- ``POSTGRES_PASSWORD``
-- ``POSTGRES_JNDI_RESOURCE_NAME`` (optional; defaults to ``jdbc/postgres``)
+* ``POSTGRES_JNDI_ENABLED`` to ``true``
+* ``POSTGRES_HOST``
+* ``POSTGRES_PORT`` (optional; defaults to 5432)
+* ``POSTGRES_DB``
+* ``POSTGRES_USERNAME``
+* ``POSTGRES_PASSWORD``
+* ``POSTGRES_JNDI_RESOURCE_NAME`` (optional; defaults to ``jdbc/postgres``)
 
 In geoserver, you can then reference this JNDI resource using the name `java:comp/env/jdbc/postgres` (if using default).
 
 Note: previously you could tweak the JNDI settings in a custom `context.xml` (see below), but its contents are now included in `server.xml`.
 
+
 ## How to use custom (tomcat) configuration files
 
 This image provides default (tomcat) configurations that are located in the `./config/` subdir.
 
-- `server.xml` (security hardened version by default)
-- ~context.xml~ (now included into `server.xml`, previously used for JNDI settings)
+* `server.xml` (security hardened version by default)
+* ~context.xml~ (now included into `server.xml`, previously used for JNDI settings)
 
 In case you want to fully overwrite such a config file, you can do so by mounting it to the `/opt/config_overrides/` directory of a container.
 The `startup.sh` script will then copy (and overwrite) these files to the catalina conf directory before starting tomcat.
@@ -346,16 +198,15 @@ docker run -it -p 80:8080 \
 To enable HTTPS, mount a JKS file to the container (ex. `/opt/keystore.jks`) and provide the following environment
 variables:
 
-- ``HTTPS_ENABLED`` to `true`
-- ``HTTPS_KEYSTORE_FILE`` (defaults to `/opt/keystore.jks`)
-- ``HTTPS_KEYSTORE_PASSWORD`` (defaults to `changeit`)
-- ``HTTPS_KEY_ALIAS`` (defaults to `server`)
+* ``HTTPS_ENABLED`` to `true`
+* ``HTTPS_KEYSTORE_FILE`` (defaults to `/opt/keystore.jks`)
+* ``HTTPS_KEYSTORE_PASSWORD`` (defaults to `changeit`)
+* ``HTTPS_KEY_ALIAS`` (defaults to `server`)
 
 ## How to run it as a non-privileged user ?
 
 It is usually considered a good practice to run the containers as a non-privileged user (not `root`).
 While it runs by default as root, for backwards compatibility reasons, several environment variables allow you to change this behaviour:
-
 - `RUN_UNPRIVILEGED=true`: run as unprivileged user `tomcat`. Default uid:gid are 999:999
 - `RUN_WITH_USER_UID` allows you to set `tomcat`'s uid. By default this is 999.
 - `RUN_WITH_USER_GID` allows you to set `tomcat`'s gid. By default this is the same as the uid.
@@ -372,15 +223,13 @@ Run ``docker-compose``:
 ```shell
 docker-compose -f docker-compose-demo.yml up --build
 ```
-
 ## Environment Variables
 
 Following is the list of the all the environment variables that can be passed down to the geoserver docker image, you can check the default values for an image using `docker inspect [IMAGE_NAME]`
-
 | VAR NAME | DESCRIPTION | SAMPLE VALUE |
 |--------------|-----------|------------|
 | PATH | Used by geoserver internally to find all the libs | `/usr/local/sbin:/usr/local/bin:` |
-| CATALINA_HOME | CATALINA home path | `/usr/local/tomcat` (see also [Tomcat Dockerfile](https://github.com/docker-library/tomcat/blob/master/9.0/jdk11/temurin-jammy/Dockerfile)) |
+| CATALINA_HOME | CATALINA home path | `/usr/local/tomcat` (see also [here](https://github.com/docker-library/tomcat/blob/master/9.0/jdk11/temurin-jammy/Dockerfile)) |
 | EXTRA_JAVA_OPTS | Used to pass params to the JAVA environment. Check [ref](https://docs.oracle.com/en/java/javase/11/tools/java.html) | `-Xms256m -Xmx1g` |
 | CORS_ENABLED | CORS enabled configuration | `false` |
 | CORS_ALLOWED_ORIGINS | CORS origins configuration | `*` |
@@ -412,7 +261,6 @@ Following is the list of the all the environment variables that can be passed do
 After the initial setup, it's recommended to remove the `GEOSERVER_ADMIN_USER` and `GEOSERVER_ADMIN_PASSWORD` variable. Otherwise, newly added roles and users may be overwritten by the next time the container is restarted.
 
 The following values cannot really be safely changed (as they are used to download extensions and community modules as the docker image first starts up).
-
 | VAR NAME | DESCRIPTION | SAMPLE VALUE |
 |--------------|-----------|------------|
 | GEOSERVER_VERSION | Geoserver version (used internally) | `2.24-SNAPSHOT`|
