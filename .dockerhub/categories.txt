@@ -1,3 +1,0 @@
-Primary: Developer Tools
-Secondary: Application Infrastructure
-Alternative: Databases & Analytics

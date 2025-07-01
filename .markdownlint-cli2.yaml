@@ -21,4 +21,4 @@ config:
   MD033: false
   
   # Allow bare URLs (useful for quick references)
-  MD034: false 
+  MD034: false
