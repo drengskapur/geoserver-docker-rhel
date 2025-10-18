@@ -1,10 +1,10 @@
-ARG BUILDER_BASE_IMAGE=eclipse-temurin:17.0.15_6-jdk-jammy@sha256:6801c663ee4b0db7e74573402ac8ef55bc10e4933db39a3b94019cabad25e6a9
-ARG GEOSERVER_BASE_IMAGE=tomcat:9.0.106-jdk17-temurin-jammy@sha256:121b044981d304fcbb39b9af61900a8faa566fed3df401acdc1aec15fa5f7b6a
+ARG BUILDER_BASE_IMAGE=eclipse-temurin:17.0.16_8-jdk-noble@sha256:5c26ae538da6a39ab005a33cb6c5ab65db9d38fe47feb889330c71b6c7b5fe05
+ARG GEOSERVER_BASE_IMAGE=tomcat:9.0.109-jdk17-temurin-noble@sha256:c6b124e2954493034278dd14c87b4c3184f107af67ba2d47bbfca6924790c4ce
 
-ARG GS_VERSION=2.27.0
+ARG GS_VERSION=2.27.2
 ARG BUILD_GDAL=false
-ARG PROJ_VERSION=9.5.1
-ARG GDAL_VERSION=3.10.2
+ARG PROJ_VERSION=9.7.0
+ARG GDAL_VERSION=3.11.4
 ARG INSTALL_PREFIX=/usr/local
 
 # This is a multi stage build.
@@ -40,9 +40,9 @@ RUN mkdir -p /build_projgrids/usr/ \
     mkdir -p /build_gdal_python/usr/ \
     mkdir -p /build_gdal_version_changing/usr/ \
     && if test "${BUILD_GDAL}" = "true"; then \
-        apt-get update -y \
-        && apt-get upgrade -y \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
+        apt update -y \
+        && apt upgrade -y \
+        && DEBIAN_FRONTEND=noninteractive apt install -y --fix-missing --no-install-recommends \
             # PROJ build dependencies
             build-essential ca-certificates \
             git make ninja-build cmake wget unzip libtool automake \
@@ -207,12 +207,17 @@ ENV WEBAPP_CONTEXT=geoserver
 
 # see https://docs.geoserver.org/stable/en/user/production/container.html
 ENV CATALINA_OPTS="\$EXTRA_JAVA_OPTS \
+    --add-exports=java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED \
+    --add-exports=java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED \
     --add-exports=java.desktop/sun.awt.image=ALL-UNNAMED \
     --add-opens=java.base/java.lang=ALL-UNNAMED \
     --add-opens=java.base/java.util=ALL-UNNAMED \
     --add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
     --add-opens=java.base/java.text=ALL-UNNAMED \
     --add-opens=java.desktop/java.awt.font=ALL-UNNAMED \
+    --add-opens=java.desktop/java.awt.image=ALL-UNNAMED \
+    --add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED \
+    --add-opens=java.desktop/javax.imageio=ALL-UNNAMED \
     --add-opens=java.desktop/sun.awt.image=ALL-UNNAMED \
     --add-opens=java.naming/com.sun.jndi.ldap=ALL-UNNAMED \
     --add-opens=java.desktop/sun.java2d.pipe=ALL-UNNAMED \
@@ -230,20 +235,20 @@ WORKDIR /tmp
 # Install dependencies
 RUN set -eux \
     && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get update -y \
-    && apt-get upgrade -y \
-    && apt-get install -y --no-install-recommends \
+    && apt update -y \
+    && apt upgrade -y \
+    && apt install -y --no-install-recommends \
     # Basic dependencies
-    openssl curl unzip locales gettext gosu \
+    openssl curl unzip zip locales gettext gosu \
     && if test "${BUILD_GDAL}" = "true"; then \
         # PROJ dependencies
-        apt-get install -y --no-install-recommends libsqlite3-0 libtiff5 libcurl4 ca-certificates \
+        apt install -y --no-install-recommends libsqlite3-0 libtiff6 libcurl4 ca-certificates \
         # GDAL dependencies
-        bash-completion python3-numpy libpython3.11 libjpeg-turbo8 libgeos3.10.2 libgeos-c1v5 \
+        bash-completion python3-numpy libpython3.12t64 libjpeg-turbo8 libgeos3.12.1t64 libgeos-c1v5 \
             libexpat1 libxerces-c3.2 libwebp7 libpng16-16 libdeflate0 libzstd1 bash libpq5 libssl3 \
-            libopenjp2-7 libspatialite7 libmuparser2v5 python3-pil python-is-python3; \
+            libopenjp2-7 libspatialite8t64 libmuparser2v5 python-is-python3; \
     fi \
-    && apt-get clean \
+    && apt clean \
     && rm -rf /var/cache/apt/* \
     && rm -rf /var/lib/apt/lists/*
 
@@ -293,11 +298,11 @@ COPY config $CONFIG_DIR
 # Apply CIS Apache tomcat recommendations regarding server information
 # * Alter the advertised server.info String (2.1 - 2.3)
 RUN cd $CATALINA_HOME/lib \
-    && jar xf catalina.jar org/apache/catalina/util/ServerInfo.properties \
+    && unzip catalina.jar org/apache/catalina/util/ServerInfo.properties \
     && sed -i 's/Apache Tomcat\/'"${TOMCAT_VERSION}"'/i_am_a_teapot/g' org/apache/catalina/util/ServerInfo.properties \
     && sed -i 's/'"${TOMCAT_VERSION}"'/x.y.z/g' org/apache/catalina/util/ServerInfo.properties \
     && sed -i 's/^server.built=.*/server.built=/g' org/apache/catalina/util/ServerInfo.properties \
-    && jar uf catalina.jar org/apache/catalina/util/ServerInfo.properties \
+    && zip -u catalina.jar org/apache/catalina/util/ServerInfo.properties \
     && rm -rf org/apache/catalina/util/ServerInfo.properties
 
 # copy scripts
