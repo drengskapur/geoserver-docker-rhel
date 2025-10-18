@@ -42,7 +42,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: 'geoserver-security-scan:latest'
           format: 'sarif'
@@ -51,13 +51,13 @@ jobs:
           exit-code: '0'  # Don't fail the build on vulnerabilities
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@181d5eefc20863364f96762470ba6f862bdef56b # v3
+        uses: github/codeql-action/upload-sarif@16140ae1a102900babc80a33c44059580f687047 # v4
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
 
       - name: Run Trivy vulnerability scanner (Table format)
-        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         continue-on-error: true  # Don't stop workflow on vulnerabilities
         with:
           image-ref: 'geoserver-security-scan:latest'
@@ -66,8 +66,8 @@ jobs:
           exit-code: '1'  # Fail on critical/high vulnerabilities
 
       - name: Run Trivy config scanner
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         continue-on-error: true  # Ensure upload steps run even if scan fails
-        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
         with:
           scan-type: 'config'
           scan-ref: '.'
@@ -76,13 +76,13 @@ jobs:
           exit-code: '0'
 
       - name: Upload Trivy config scan results
-        uses: github/codeql-action/upload-sarif@181d5eefc20863364f96762470ba6f862bdef56b # v3
+        uses: github/codeql-action/upload-sarif@16140ae1a102900babc80a33c44059580f687047 # v4
         if: always()
         with:
           sarif_file: 'trivy-config-results.sarif'
 
       - name: Run Trivy secret scanner
-        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         continue-on-error: true  # Ensure upload steps run even if scan fails
         with:
           scan-type: 'fs'
@@ -93,7 +93,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload Trivy secret scan results
-        uses: github/codeql-action/upload-sarif@181d5eefc20863364f96762470ba6f862bdef56b # v3
+        uses: github/codeql-action/upload-sarif@16140ae1a102900babc80a33c44059580f687047 # v4
         if: always()
         with:
           sarif_file: 'trivy-secret-results.sarif'
@@ -114,7 +114,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Run Trivy vulnerability scanner on published image
-        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: '${{ secrets.DOCKER_USERNAME }}/geoserver:${{ matrix.tag }}'
           format: 'sarif'
@@ -123,7 +123,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload scan results for published image
-        uses: github/codeql-action/upload-sarif@181d5eefc20863364f96762470ba6f862bdef56b # v3
+        uses: github/codeql-action/upload-sarif@16140ae1a102900babc80a33c44059580f687047 # v4
         if: always()
         with:
           sarif_file: 'trivy-published-${{ matrix.tag }}.sarif'
