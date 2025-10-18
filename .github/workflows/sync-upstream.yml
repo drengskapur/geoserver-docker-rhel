@@ -1,0 +1,161 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to sync (default: master)'
+        required: false
+        default: 'master'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Sync with Upstream
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.inputs.branch || 'master' }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/geoserver/docker.git || true
+          git fetch upstream
+
+      - name: Check for upstream changes
+        id: check
+        run: |
+          BRANCH="${{ github.event.inputs.branch || 'master' }}"
+          UPSTREAM_SHA=$(git rev-parse upstream/${BRANCH})
+          CURRENT_SHA=$(git rev-parse origin/${BRANCH})
+
+          echo "upstream_sha=${UPSTREAM_SHA}" >> $GITHUB_OUTPUT
+          echo "current_sha=${CURRENT_SHA}" >> $GITHUB_OUTPUT
+
+          if [ "$UPSTREAM_SHA" != "$CURRENT_SHA" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "::notice::Upstream changes detected"
+
+            # Count commits behind
+            COMMITS_BEHIND=$(git rev-list --count ${CURRENT_SHA}..${UPSTREAM_SHA})
+            echo "commits_behind=${COMMITS_BEHIND}" >> $GITHUB_OUTPUT
+            echo "::notice::Branch is ${COMMITS_BEHIND} commits behind upstream"
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "::notice::Already up to date with upstream"
+          fi
+
+      - name: Attempt automatic merge
+        if: steps.check.outputs.has_changes == 'true'
+        id: merge
+        continue-on-error: true
+        run: |
+          BRANCH="${{ github.event.inputs.branch || 'master' }}"
+
+          # Try to merge upstream changes
+          if git merge upstream/${BRANCH} --no-edit; then
+            echo "merge_status=success" >> $GITHUB_OUTPUT
+            echo "::notice::Successfully merged upstream changes"
+          else
+            echo "merge_status=conflict" >> $GITHUB_OUTPUT
+            echo "::warning::Merge conflicts detected"
+            git merge --abort
+            exit 1
+          fi
+
+      - name: Push changes
+        if: steps.check.outputs.has_changes == 'true' && steps.merge.outputs.merge_status == 'success'
+        run: |
+          BRANCH="${{ github.event.inputs.branch || 'master' }}"
+          git push origin ${BRANCH}
+          echo "::notice::Successfully pushed synced changes to origin/${BRANCH}"
+
+      - name: Create sync PR on conflict
+        if: steps.check.outputs.has_changes == 'true' && steps.merge.outputs.merge_status == 'conflict'
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v7.0.5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: sync with upstream (manual merge required)'
+          title: '🔄 Sync with upstream - Manual merge required'
+          body: |
+            ## Upstream Sync Status
+
+            ⚠️ **Automatic merge failed due to conflicts**
+
+            This PR was automatically created because the upstream repository has changes that conflict with our fork.
+
+            **Details:**
+            - Upstream commit: `${{ steps.check.outputs.upstream_sha }}`
+            - Current commit: `${{ steps.check.outputs.current_sha }}`
+            - Commits behind: ${{ steps.check.outputs.commits_behind }}
+
+            **Next steps:**
+            1. Review the conflicts
+            2. Manually merge upstream changes: `git merge upstream/${{ github.event.inputs.branch || 'master' }}`
+            3. Resolve conflicts
+            4. Push to this PR branch
+
+            **Upstream Repository:** https://github.com/geoserver/docker
+          branch: sync-upstream-${{ github.run_number }}
+          delete-branch: true
+          labels: |
+            upstream-sync
+            manual-merge-required
+
+      - name: Create success summary
+        if: steps.check.outputs.has_changes == 'true' && steps.merge.outputs.merge_status == 'success'
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ✅ Upstream Sync Successful
+
+          Successfully synced with upstream repository.
+
+          - **Commits merged:** ${{ steps.check.outputs.commits_behind }}
+          - **Upstream commit:** \`${{ steps.check.outputs.upstream_sha }}\`
+          - **Branch:** ${{ github.event.inputs.branch || 'master' }}
+
+          The changes have been automatically pushed to origin.
+          EOF
+
+      - name: Create up-to-date summary
+        if: steps.check.outputs.has_changes == 'false'
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ✅ Already Up to Date
+
+          No changes detected from upstream repository.
+
+          - **Branch:** ${{ github.event.inputs.branch || 'master' }}
+          - **Current commit:** \`${{ steps.check.outputs.current_sha }}\`
+          EOF
+
+      - name: Create conflict summary
+        if: steps.check.outputs.has_changes == 'true' && steps.merge.outputs.merge_status == 'conflict'
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## ⚠️ Manual Merge Required
+
+          Automatic merge failed due to conflicts.
+
+          - **Commits behind:** ${{ steps.check.outputs.commits_behind }}
+          - **Upstream commit:** \`${{ steps.check.outputs.upstream_sha }}\`
+          - **Branch:** ${{ github.event.inputs.branch || 'master' }}
+
+          A pull request has been created for manual conflict resolution.
+          EOF
