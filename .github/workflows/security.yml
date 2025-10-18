@@ -55,6 +55,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
+          category: 'trivy-vulnerabilities'
 
       - name: Run Trivy vulnerability scanner (Table format)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -80,6 +81,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-config-results.sarif'
+          category: 'trivy-config'
 
       - name: Run Trivy secret scanner
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -97,6 +99,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-secret-results.sarif'
+          category: 'trivy-secrets'
 
   # Scan published images from Docker Hub
   scan-published:
