@@ -1,0 +1,14 @@
+version: '3'
+
+tasks:
+  claude:
+    desc: Run Claude
+    silent: true
+    cmds:
+      - claude --dangerously-skip-permissions --continue || claude --dangerously-skip-permissions
+
+  resume:
+    desc: Resume Claude Code session
+    silent: true
+    cmds:
+      - claude --dangerously-skip-permissions --resume || claude --dangerously-skip-permissions
