@@ -1,0 +1,163 @@
+name: Renovate Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-approve-and-merge:
+    name: Auto-approve and merge Renovate PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'renovate[bot]'
+
+    steps:
+      - name: Check PR labels
+        id: check-labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            console.log('PR labels:', labels);
+
+            // Don't auto-merge if it has manual-review label
+            if (labels.includes('manual-review') || labels.includes('major-update')) {
+              console.log('Manual review required - skipping auto-merge');
+              core.setOutput('should_merge', 'false');
+              return;
+            }
+
+            // Auto-merge if it has automerge label
+            if (labels.includes('automerge') || labels.includes('security') || labels.includes('critical')) {
+              console.log('Auto-merge eligible');
+              core.setOutput('should_merge', 'true');
+              return;
+            }
+
+            console.log('No automerge label found');
+            core.setOutput('should_merge', 'false');
+
+      - name: Wait for status checks
+        if: steps.check-labels.outputs.should_merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const maxAttempts = 30;
+            const delayMs = 10000; // 10 seconds
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.payload.pull_request.head.sha
+              });
+
+              const allChecks = checks.check_runs;
+              const requiredChecks = allChecks.filter(check =>
+                check.name !== 'Auto-approve and merge Renovate PRs'
+              );
+
+              console.log(`Attempt ${attempt}/${maxAttempts}`);
+              console.log(`Total checks: ${requiredChecks.length}`);
+
+              if (requiredChecks.length === 0) {
+                console.log('No checks yet, waiting...');
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                continue;
+              }
+
+              const pending = requiredChecks.filter(c => c.status !== 'completed');
+              const failed = requiredChecks.filter(c =>
+                c.status === 'completed' && c.conclusion !== 'success'
+              );
+
+              console.log(`Pending: ${pending.length}, Failed: ${failed.length}`);
+
+              if (failed.length > 0) {
+                console.log('Some checks failed:');
+                failed.forEach(c => console.log(`  - ${c.name}: ${c.conclusion}`));
+                core.setFailed('Status checks failed - not auto-merging');
+                return;
+              }
+
+              if (pending.length === 0) {
+                console.log('All checks passed!');
+                return;
+              }
+
+              await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+
+            core.setFailed('Timed out waiting for checks to complete');
+
+      - name: Auto-approve PR
+        if: steps.check-labels.outputs.should_merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              event: 'APPROVE',
+              body: '✅ Auto-approved by Renovate auto-merge workflow.\n\n- All status checks passed\n- PR is labeled for auto-merge\n- Changes are safe (minor/patch/digest updates)'
+            });
+            console.log('PR approved');
+
+      - name: Enable auto-merge
+        if: steps.check-labels.outputs.should_merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                merge_method: 'squash',
+                commit_title: context.payload.pull_request.title,
+                commit_message: 'Auto-merged by Renovate workflow'
+              });
+              console.log('✅ PR merged successfully');
+            } catch (error) {
+              if (error.message.includes('405')) {
+                console.log('Auto-merge not available - trying to enable it');
+                await github.graphql(`
+                  mutation($pullRequestId: ID!) {
+                    enablePullRequestAutoMerge(input: {
+                      pullRequestId: $pullRequestId,
+                      mergeMethod: SQUASH
+                    }) {
+                      pullRequest {
+                        autoMergeRequest {
+                          enabledAt
+                        }
+                      }
+                    }
+                  }
+                `, {
+                  pullRequestId: context.payload.pull_request.node_id
+                });
+                console.log('✅ Auto-merge enabled');
+              } else {
+                throw error;
+              }
+            }
+
+      - name: Add comment for manual review items
+        if: steps.check-labels.outputs.should_merge == 'false' && (contains(github.event.pull_request.labels.*.name, 'manual-review') || contains(github.event.pull_request.labels.*.name, 'major-update'))
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: '⚠️ **Manual Review Required**\n\nThis PR requires manual review because it contains:\n- Major version updates, OR\n- Changes requiring human verification\n\nPlease review the changes and merge manually if appropriate.'
+            });

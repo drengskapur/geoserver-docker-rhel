@@ -7,6 +7,7 @@
     "docker:enableMajor",
     "helpers:pinGitHubActionDigests"
   ],
+  "platformAutomerge": true,
   "timezone": "America/New_York",
   "schedule": [
     "after 7am on monday"
@@ -92,12 +93,17 @@
       "minimumReleaseAge": "7 days"
     },
     {
-      "description": "GitHub Actions - pin digests and auto-update",
+      "description": "GitHub Actions - pin digests and auto-merge minor/patch",
       "matchDatasources": [
         "github-actions"
       ],
       "matchDepTypes": [
         "action"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
       ],
       "pinDigests": true,
       "schedule": [
@@ -106,12 +112,39 @@
       "prPriority": 8,
       "labels": [
         "github-actions",
-        "security"
+        "automerge"
       ],
       "commitMessagePrefix": "ci:",
+      "automerge": true,
+      "automergeType": "pr",
+      "stabilityDays": 3,
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "GitHub Actions - major updates need manual review",
+      "matchDatasources": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "pinDigests": true,
+      "schedule": [
+        "before 6am on monday"
+      ],
+      "prPriority": 8,
+      "labels": [
+        "github-actions",
+        "major-update",
+        "manual-review"
+      ],
+      "commitMessagePrefix": "ci!:",
       "automerge": false,
-      "stabilityDays": 5,
-      "minimumReleaseAge": "5 days"
+      "stabilityDays": 7,
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "Upstream Dockerfile changes - trigger enterprise rebuild",
@@ -181,16 +214,20 @@
       ]
     },
     {
-      "description": "Minor and patch updates - can be auto-merged",
+      "description": "Minor and patch updates - auto-merge after tests pass",
       "matchUpdateTypes": [
         "minor",
-        "patch"
+        "patch",
+        "digest"
       ],
-      "automerge": false,
+      "automerge": true,
+      "automergeType": "pr",
       "prPriority": 7,
       "labels": [
-        "minor-patch"
+        "minor-patch",
+        "automerge"
       ],
+      "commitMessagePrefix": "chore(deps):",
       "stabilityDays": 3,
       "minimumReleaseAge": "3 days"
     }
