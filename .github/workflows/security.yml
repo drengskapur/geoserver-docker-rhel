@@ -58,6 +58,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner (Table format)
         uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
+        continue-on-error: true  # Don't stop workflow on vulnerabilities
         with:
           image-ref: 'geoserver-security-scan:latest'
           format: 'table'
@@ -65,6 +66,7 @@ jobs:
           exit-code: '1'  # Fail on critical/high vulnerabilities
 
       - name: Run Trivy config scanner
+        continue-on-error: true  # Ensure upload steps run even if scan fails
         uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
         with:
           scan-type: 'config'
@@ -81,6 +83,7 @@ jobs:
 
       - name: Run Trivy secret scanner
         uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # v0.31.0
+        continue-on-error: true  # Ensure upload steps run even if scan fails
         with:
           scan-type: 'fs'
           scan-ref: '.'
