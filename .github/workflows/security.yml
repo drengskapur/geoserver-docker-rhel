@@ -51,7 +51,7 @@ jobs:
           exit-code: '0'  # Don't fail the build on vulnerabilities
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@16140ae1a102900babc80a33c44059580f687047 # v4
+        uses: github/codeql-action/upload-sarif@fe4161a26a8629af62121b670040955b330f9af2 # v4
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
@@ -77,7 +77,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload Trivy config scan results
-        uses: github/codeql-action/upload-sarif@16140ae1a102900babc80a33c44059580f687047 # v4
+        uses: github/codeql-action/upload-sarif@fe4161a26a8629af62121b670040955b330f9af2 # v4
         if: always()
         with:
           sarif_file: 'trivy-config-results.sarif'
@@ -95,7 +95,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload Trivy secret scan results
-        uses: github/codeql-action/upload-sarif@16140ae1a102900babc80a33c44059580f687047 # v4
+        uses: github/codeql-action/upload-sarif@fe4161a26a8629af62121b670040955b330f9af2 # v4
         if: always()
         with:
           sarif_file: 'trivy-secret-results.sarif'
@@ -126,7 +126,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload scan results for published image
-        uses: github/codeql-action/upload-sarif@16140ae1a102900babc80a33c44059580f687047 # v4
+        uses: github/codeql-action/upload-sarif@fe4161a26a8629af62121b670040955b330f9af2 # v4
         if: always()
         with:
           sarif_file: 'trivy-published-${{ matrix.tag }}.sarif'
